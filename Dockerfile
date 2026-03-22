@@ -46,41 +46,29 @@ RUN pnpm run build
 # STAGE 2: PRODUCTION IMAGE
 # Copy only what is needed to run — no dev dependencies
 # =============================================================
+# STAGE 2: PRODUCTION IMAGE
 FROM $NODE AS runner
 
 WORKDIR /app
 
-# Runtime system packages:
-#   openssl → Prisma needs it at runtime to connect to the database
-#   curl    → useful for health checks
 RUN apt-get update && apt-get install -y \
     openssl \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm in the production image to run pnpm install --prod
 RUN npm install -g pnpm@9
 
-# Copy manifest to install prod-only deps
-COPY package.json pnpm-lock.yaml ./
-
-# --prod skips devDependencies, keeping the final image lean
-RUN pnpm install --no-frozen-lockfile --prod
-
-# Copy the compiled NestJS application from the builder stage
+# Copy everything needed to run from the builder stage
 COPY --from=builder /app/dist ./dist
-
-# Copy the Prisma Client and its native engine binary.
-# The engine binary is platform-specific and must match the runtime OS.
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-
-# Copy the Prisma schema (needed for migrations at runtime if desired)
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./package.json
 
-# 'node' is a built-in non-root user in the official Node.js Docker images
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
 USER node
 
 EXPOSE 3001
 
-CMD ["node", "dist/main.js"]
+ENTRYPOINT ["./entrypoint.sh"]
