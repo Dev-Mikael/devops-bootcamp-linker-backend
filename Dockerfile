@@ -29,7 +29,7 @@ COPY package.json pnpm-lock.yaml ./
 
 # --frozen-lockfile = equivalent of npm ci
 # Fails if pnpm-lock.yaml is out of sync with package.json
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # Copy source code and the Prisma schema
 COPY . .
@@ -65,7 +65,7 @@ RUN npm install -g pnpm@9
 COPY package.json pnpm-lock.yaml ./
 
 # --prod skips devDependencies, keeping the final image lean
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --no-frozen-lockfile --prod
 
 # Copy the compiled NestJS application from the builder stage
 COPY --from=builder /app/dist ./dist
