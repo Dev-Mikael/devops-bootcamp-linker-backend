@@ -74,7 +74,7 @@ jobs:
 
       - name: Run ESLint on changed files
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: npx eslint ${{ steps.changed-files.outputs.all_changed_files }} --max-warnings=0
+        run: npx eslint@8 ${{ steps.changed-files.outputs.all_changed_files }} --max-warnings=0
 
       - name: Skip lint (no JS/TS files changed)
         if: steps.changed-files.outputs.any_changed != 'true'
